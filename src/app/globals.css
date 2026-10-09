@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Brand tokens as raw HSL triples, mirroring the product app so the two
+ * codebases stay visually identical. Values trace back to the brand kit:
+ * brand-600 #FF6A00, brand-700 #F24400, brand-800 #C93A00, ink #C2410C,
+ * charcoal #0F172A.
+ */
+@layer base {
+  :root {
+    --brand-50: 25 100% 96%;
+    --brand-100: 28 100% 91%;
+    --brand-200: 27 100% 82%;
+    --brand-500: 24 100% 60%;
+    --brand-600: 25 100% 50%;
+    --brand-700: 17 100% 47%;
+    --brand-800: 17 100% 39%;
+    /* #C2410C. The exact brief value; verified at 4.9:1 on white, 4.5:1 on
+       surface-muted and on a brand-50 chip. Never use brand-600 for text. */
+    --brand-ink: 17.5 88% 40%;
+
+    --charcoal: 222 48% 11%;
+
+    --surface: 0 0% 100%;
+    --surface-card: 0 0% 100%;
+    --surface-muted: 210 40% 96%;
+
+    --ink: 222 48% 11%;
+    /* Both muted levels are darkened from the usual slate-500/400 so they clear
+       AA (4.5:1) on surface-muted as well as on white. */
+    --ink-muted: 215 16% 42%;
+    --ink-subtle: 215 14% 45%;
+
+    --line: 214 32% 91%;
+    --shadow: 222 48% 11%;
+
+    --success: 142 71% 36%;
+    --warning: 38 92% 50%;
+    --info: 221 83% 53%;
+    --danger: 0 72% 51%;
+  }
+
+  .dark {
+    /* Tints invert to warm washes so an orange chip reads on either surface. */
+    --brand-50: 20 55% 14%;
+    --brand-100: 19 58% 19%;
+    --brand-200: 19 62% 27%;
+    --brand-500: 24 100% 62%;
+    --brand-600: 25 100% 53%;
+    --brand-700: 20 100% 55%;
+    --brand-800: 17 100% 45%;
+    /* Orange text in dark mode is #FF8A3D — brand-ink would disappear. */
+    --brand-ink: 22 100% 62%;
+
+    --surface: 221 44% 6%;
+    --surface-card: 222 48% 11%;
+    --surface-muted: 217 33% 17%;
+
+    --ink: 213 27% 90%;
+    --ink-muted: 215 20% 65%;
+    /* Lifted so small labels clear AA on surface-muted too, not just on cards. */
+    --ink-subtle: 215 16% 59%;
+
+    --line: 215 31% 21%;
+    --shadow: 0 0% 0%;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface text-ink antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-brand-200 text-charcoal;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-700 ring-offset-2 ring-offset-surface;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-balance font-semibold text-ink;
+  }
+}
+
+@layer utilities {
+  .container-page {
+    @apply mx-auto w-full max-w-content px-4 sm:px-6 lg:px-8;
+  }
+
+  /* The single background treatment used on the site: a faint dot grid. */
+  .dot-grid {
+    background-image: radial-gradient(hsl(var(--line)) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .text-pretty-wrap {
+    text-wrap: pretty;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
