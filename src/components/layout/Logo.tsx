@@ -1,36 +1,66 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { cn } from '@/lib/cn'
 
 /**
- * The wordmark is styled text: "Oneclick" in charcoal, "HR" in brand ink.
- * To swap in a real asset later, drop public/logo.svg and replace the <span>
- * pair below with a next/image pointing at it — nothing else references the mark.
+ * Real brand assets from public/brand. The light logo (dark text) is shown in
+ * light theme and the dark logo (light text) in dark theme; the swap is pure
+ * CSS so there is no hydration flash.
  */
 export function Wordmark({ className }: { className?: string }) {
   return (
-    <span className={cn('text-[1.0625rem] font-bold tracking-[-0.02em] text-ink', className)}>
-      Oneclick<span className="text-brand-ink">HR</span>
-    </span>
+    <>
+      <Image
+        src="/brand/logo-wordmark.png"
+        alt="OneclickHR"
+        width={793}
+        height={117}
+        className={cn('h-5 w-auto dark:hidden', className)}
+      />
+      <Image
+        src="/brand/logo-wordmark-dark.png"
+        alt="OneclickHR"
+        width={793}
+        height={117}
+        className={cn('hidden h-5 w-auto dark:block', className)}
+      />
+    </>
   )
 }
 
 export function LogoMark({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 28 28"
+    <Image
+      src="/brand/logo-mark.png"
+      alt=""
       aria-hidden="true"
-      className={cn('size-7 shrink-0', className)}
-      fill="none"
-    >
-      <rect width="28" height="28" rx="8" fill="hsl(var(--brand-600))" />
-      <path
-        d="M9 14.4 12.4 18 19 10.8"
-        stroke="#fff"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+      width={512}
+      height={469}
+      className={cn('h-8 w-auto shrink-0', className)}
+    />
+  )
+}
+
+export function FullLogo({ className }: { className?: string }) {
+  return (
+    <>
+      <Image
+        src="/brand/logo-horizontal.png"
+        alt="OneclickHR"
+        width={1061}
+        height={243}
+        priority
+        className={cn('h-8 w-auto dark:hidden', className)}
       />
-    </svg>
+      <Image
+        src="/brand/logo-horizontal-dark.png"
+        alt="OneclickHR"
+        width={1061}
+        height={243}
+        priority
+        className={cn('hidden h-8 w-auto dark:block', className)}
+      />
+    </>
   )
 }
 
@@ -38,11 +68,10 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={cn('flex items-center gap-2.5 rounded-lg', className)}
+      className={cn('flex items-center rounded-lg', className)}
       aria-label="OneclickHR home"
     >
-      <LogoMark />
-      <Wordmark />
+      <FullLogo />
     </Link>
   )
 }

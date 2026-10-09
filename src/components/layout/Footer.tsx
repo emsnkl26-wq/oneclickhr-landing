@@ -2,7 +2,7 @@ import { ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { footerColumns } from '@/content/nav'
 import { site } from '@/lib/site'
-import { LogoMark, Wordmark } from './Logo'
+import { FullLogo } from './Logo'
 
 export function Footer() {
   // Computed, not hardcoded, so the footer does not go stale in January.
@@ -13,10 +13,7 @@ export function Footer() {
       <div className="container-page py-14">
         <div className="grid gap-10 lg:grid-cols-[1.3fr_3fr]">
           <div>
-            <div className="flex items-center gap-2.5">
-              <LogoMark />
-              <Wordmark />
-            </div>
+            <FullLogo />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">
               {site.tagline} {site.description}
             </p>

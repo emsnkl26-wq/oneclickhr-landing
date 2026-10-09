@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og'
 export const runtime = 'edge'
 
 const BRAND = '#FF6A00'
-const CHARCOAL = '#0F172A'
+const CHARCOAL ='#0F172A'
 
 /**
  * Branded 1200x630 OG card. Rendered at the edge so every page gets a real
@@ -12,7 +12,7 @@ const CHARCOAL = '#0F172A'
  * visible gain at this size.
  */
 export function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const { searchParams, origin } = new URL(request.url)
   const raw = searchParams.get('title')?.slice(0, 120)
   const title = raw && raw.trim().length > 0 ? raw : 'HR Management in One Click'
 
@@ -40,28 +40,8 @@ export function GET(request: Request) {
           background: 'rgba(255,106,0,0.18)',
         }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            background: BRAND,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 30,
-            fontWeight: 700,
-            color: '#fff',
-          }}
-        >
-          ✓
-        </div>
-        <div style={{ display: 'flex', fontSize: 34, fontWeight: 700, color: '#fff' }}>
-          <span>Oneclick</span>
-          <span style={{ color: '#FF8A3D' }}>HR</span>
-        </div>
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`${origin}/brand/logo-horizontal-dark.png`}width={280} height={64} alt="OneclickHR" />
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div
