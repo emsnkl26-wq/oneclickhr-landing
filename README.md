@@ -258,3 +258,5 @@ ratings, user counts, uptime percentages, prices, funding or compliance certific
 of those are real. `/security` states plainly what is not claimed — no SOC 2, no ISO 27001, no
 HIPAA, no "GDPR certification". Keep it that way: if you want to add a claim, it needs to be true and
 checkable.
+#   o n e c l i c k h r - l a n d i n g  
+ 
