@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { contactSchema, type ContactInput, type ContactResponse } from '@/lib/contact-schema'
+import { contactSchema, type ContactResponse } from '@/lib/contact-schema'
 import { site } from '@/lib/site'
 
 /**
@@ -11,6 +11,7 @@ import { site } from '@/lib/site'
 const WINDOW_MS = 10 * 60 * 1000
 const MAX_PER_WINDOW = 5
 const hits = new Map<string, number[]>()
+const DEFAULT_TO_EMAIL = 'emsnkl.26@gmail.com'
 
 function rateLimited(ip: string) {
   const now = Date.now()
@@ -32,56 +33,6 @@ function clientIp(request: Request) {
   const forwarded = request.headers.get('x-forwarded-for')
   if (forwarded) return forwarded.split(',')[0].trim()
   return request.headers.get('x-real-ip') ?? 'unknown'
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
-
-function emailHtml(data: ContactInput) {
-  const rows: [string, string][] = [
-    ['Name', data.name],
-    ['Work email', data.email],
-    ['Organization', data.company],
-    ['Team size', data.teamSize],
-    ['What they need', data.enquiry],
-  ]
-
-  return `<!doctype html>
-<html lang="en"><body style="margin:0;padding:24px;background:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#0F172A">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#FFFFFF;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden">
-    <tr><td style="background:#0F172A;padding:20px 24px">
-      <span style="font-size:17px;font-weight:700;color:#FFFFFF">Oneclick<span style="color:#FF8A3D">HR</span></span>
-      <div style="margin-top:4px;font-size:12px;color:#94A3B8">New contact form submission</div>
-    </td></tr>
-    <tr><td style="padding:24px">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${rows
-          .map(
-            ([label, value]) => `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:12px;color:#64748B;width:140px">${escapeHtml(label)}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:14px;color:#0F172A">${escapeHtml(value)}</td>
-        </tr>`,
-          )
-          .join('')}
-      </table>
-      <div style="margin-top:20px;padding:16px;background:#F1F5F9;border-radius:10px;border-left:3px solid #FF6A00">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#C2410C">Message</div>
-        <div style="margin-top:8px;font-size:14px;line-height:1.6;color:#0F172A;white-space:pre-wrap">${escapeHtml(data.message)}</div>
-      </div>
-      <p style="margin:20px 0 0;font-size:12px;color:#64748B">
-        Reply directly to <a href="mailto:${escapeHtml(data.email)}" style="color:#C2410C">${escapeHtml(data.email)}</a>.
-      </p>
-    </td></tr>
-    <tr><td style="padding:16px 24px;background:#F1F5F9;font-size:11px;color:#64748B">
-      Sent from the contact form at ${site.url}
-    </td></tr>
-  </table>
-</body></html>`
 }
 
 export async function POST(request: Request) {
@@ -130,60 +81,47 @@ export async function POST(request: Request) {
     })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
-  const to = process.env.CONTACT_TO_EMAIL
-  const from = process.env.CONTACT_FROM_EMAIL
-
-  // Degrade gracefully: locally, and on any deploy without mail configured, we
-  // log the submission and tell the user honestly rather than 500-ing.
-  if (!apiKey || !to || !from) {
-    console.info('[contact] Email is not configured; submission logged only.', {
-      name: data.name,
-      email: data.email,
-      company: data.company,
-      teamSize: data.teamSize,
-      enquiry: data.enquiry,
-      messageLength: data.message.length,
-    })
-    return NextResponse.json<ContactResponse>({
-      ok: true,
-      message: `Thanks — we have your message. Email delivery is not configured on this deployment, so it was recorded in the server log. To be certain it reaches us, email ${site.contactEmail}.`,
-    })
-  }
+  // FormSubmit forwards the submission to this inbox. No API key is needed, but
+  // the address must be activated once (see .env.example).
+  const to = process.env.CONTACT_TO_EMAIL || DEFAULT_TO_EMAIL
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Origin: site.url,
+        Referer: `${site.url}/contact`,
       },
       body: JSON.stringify({
-        from,
-        to: [to],
-        reply_to: data.email,
-        subject: `${data.enquiry} — ${data.company}`,
-        html: emailHtml(data),
+        _subject: `${data.enquiry} — ${data.company}`,
+        _replyto: data.email,
+        _template: 'table',
+        _captcha: 'false',
+        Name: data.name,
+        'Work email': data.email,
+        Organization: data.company,
+        'Team size': data.teamSize,
+        'What they need': data.enquiry,
+        Message: data.message,
       }),
     })
 
-    if (!response.ok) {
-      console.error('[contact] Resend rejected the request', response.status)
+    const result = (await response.json().catch(() => null)) as { success?: unknown } | null
+    const succeeded = response.ok && result?.success !== false && result?.success !== 'false'
+
+    if (!succeeded) {
+      console.error('[contact] FormSubmit rejected the request', response.status, result)
       return NextResponse.json<ContactResponse>(
-        {
-          ok: false,
-          message: `We could not send that just now. Please email ${site.contactEmail} instead.`,
-        },
+        { ok: false, message: `We could not send that just now. Please email ${site.contactEmail} instead.` },
         { status: 502 },
       )
     }
   } catch (error) {
     console.error('[contact] Email send failed', error)
     return NextResponse.json<ContactResponse>(
-      {
-        ok: false,
-        message: `We could not send that just now. Please email ${site.contactEmail} instead.`,
-      },
+      { ok: false, message: `We could not send that just now. Please email ${site.contactEmail} instead.` },
       { status: 502 },
     )
   }
